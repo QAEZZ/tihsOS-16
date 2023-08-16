@@ -1,4 +1,26 @@
 ;;
+;; Following Daedalus Community's Tutorial.
+;;
+;;
+;;
+;; STACK NOTES
+;; In the stack, there is the top, and the base.
+;;  123456789
+;; ^top     ^base
+;;
+;; You can only pop, or push the top of the stack.
+;; When popping a value from the stack, we remove
+;; it and assign it to a register.
+;;
+;; This:
+;; push 6
+;; pop ax
+;;
+;; has the same effect as:
+;; mov ax, 6
+;;
+;;
+;;
 ;; PRINTING A CHAR TO THE SCREEN
 ;;
 ;; You need to switch to teletype mode.
@@ -72,32 +94,41 @@ int 0x10
 ;; you can set the origin: `[org 0x7c00]`
 
 [org 0x7c00]
-mov ah, 0x0e
-mov al, [welcomeVariable]
-int 0x10 ;; the BIOS interrupt
-
-;; This only prints the first character,
-;; we have to make a conditional jump.
 
 mov ah, 0x0e            ;; enter TTY mode
 mov bx, welcomeVariable ;; move the string variable to `bx`
 
-printString:
-    mov al, [bx]    ;; bx is the string
-    cmp al, 0       ;; if `al` is 0, do the below.
-                    ;; Every string is null terminated, i.e. 0.
-                    ;; If `al`, the current character, is 0, do
-                    ;; the below.
-    je end          ;; Jump if equal: end it, no more left to print.
-                    ;; This is the aforementioned conditional jump.
-    int 0x10        ;; the BIOS interrupt
-    inc bx          ;; increment bx, the character
-    jmp printString ;; loop back to the beginning
+call printString        ;; call the printString function
 
-end:
+mov ah, 0x0e            ;; enter TTY mode
+mov bx, testVariable
+call printString 
+
+jmp $
+
+;; These are essentially functions 
+
+printString:
+    mov si, bx          ;; Load bx (pointer to string) into si
+
+printLoop:
+    mov al, [si]        ;; Load the character from [si] into al
+    cmp al, 0           ;; Check if the character is null (end of string)
+    je endPrint         ;; If null, jump to endPrint
+
+    int 0x10            ;; BIOS interrupt to print character
+    inc si              ;; Move to the next character
+    jmp printLoop       ;; Jump back to printLoop to continue printing
+
+endPrint:
+    ret
+
+
+testVariable:
+    db 13,10,13,10,"test", 0
 
 welcomeVariable:
-    db 13,10,"Welcome to tihsOS!", 0
+    db 13,10,"Welcome to thisOS!", 0
     ;; `13,10` is a newline
 
 ;;
